@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "txtstat-python", "txtstat-wasm"]
+
 [package]
 name = "txtstat"
 version = "0.3.0"
