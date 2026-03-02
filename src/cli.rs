@@ -61,11 +61,15 @@ pub enum Commands {
         recursive: bool,
     },
 
-    /// Token counting
+    /// Token counting (whitespace + optional BPE)
     Tokens {
         /// Input file(s) or directory
         #[arg()]
         input: Option<PathBuf>,
+
+        /// BPE model: gpt4, gpt4o, gpt3, all
+        #[arg(long)]
+        model: Option<String>,
 
         /// Process directories recursively
         #[arg(long)]
@@ -85,6 +89,17 @@ pub enum Commands {
 
     /// Shannon entropy analysis
     Entropy {
+        /// Input file(s) or directory
+        #[arg()]
+        input: Option<PathBuf>,
+
+        /// Process directories recursively
+        #[arg(long)]
+        recursive: bool,
+    },
+
+    /// Language detection
+    Lang {
         /// Input file(s) or directory
         #[arg()]
         input: Option<PathBuf>,

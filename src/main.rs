@@ -59,10 +59,15 @@ fn main() -> Result<()> {
                 print!("{}", table.render(&cli.format)?);
             }
         }
-        cli::Commands::Tokens { input, recursive } => {
+        cli::Commands::Tokens {
+            input,
+            model,
+            recursive,
+        } => {
             let inputs = input::resolve_input(input.as_ref(), *recursive)?;
             for (name, text) in &inputs {
-                let table = commands::tokens::run(text.as_str()?, &name)?;
+                let table =
+                    commands::tokens::run(text.as_str()?, &name, model.as_deref())?;
                 print!("{}", table.render(&cli.format)?);
             }
         }
@@ -77,6 +82,13 @@ fn main() -> Result<()> {
             let inputs = input::resolve_input(input.as_ref(), *recursive)?;
             for (name, text) in &inputs {
                 let table = commands::entropy::run(text.as_str()?, &name)?;
+                print!("{}", table.render(&cli.format)?);
+            }
+        }
+        cli::Commands::Lang { input, recursive } => {
+            let inputs = input::resolve_input(input.as_ref(), *recursive)?;
+            for (name, text) in &inputs {
+                let table = commands::lang::run(text.as_str()?, &name)?;
                 print!("{}", table.render(&cli.format)?);
             }
         }

@@ -235,3 +235,140 @@ fn test_ngrams_with_custom_stopwords_file() {
         );
     }
 }
+
+// --- v0.3.0 integration tests ---
+
+#[test]
+fn test_perplexity_json() {
+    let out = txtstat(&[
+        "perplexity",
+        "tests/fixtures/prose.txt",
+        "--format",
+        "json",
+    ]);
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    let records = parsed.as_array().unwrap();
+    let pp_row = records
+        .iter()
+        .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Perplexity"))
+        .expect("missing Perplexity row");
+    let pp_val: f64 = pp_row["value"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!(pp_val.is_finite(), "perplexity should be finite");
+    assert!(pp_val > 0.0, "perplexity should be positive");
+}
+
+#[test]
+fn test_perplexity_smoothing_options() {
+    // Test laplace
+    let out_laplace = txtstat(&[
+        "perplexity",
+        "tests/fixtures/prose.txt",
+        "--smoothing",
+        "laplace",
+        "--format",
+        "json",
+    ]);
+    let parsed: serde_json::Value = serde_json::from_str(&out_laplace).unwrap();
+    let records = parsed.as_array().unwrap();
+    let smoothing_row = records
+        .iter()
+        .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Smoothing"))
+        .unwrap();
+    assert!(smoothing_row["value"].as_str().unwrap().contains("Add-k"));
+
+    // Test backoff
+    let out_backoff = txtstat(&[
+        "perplexity",
+        "tests/fixtures/prose.txt",
+        "--smoothing",
+        "backoff",
+        "--format",
+        "json",
+    ]);
+    let parsed: serde_json::Value = serde_json::from_str(&out_backoff).unwrap();
+    let records = parsed.as_array().unwrap();
+    let smoothing_row = records
+        .iter()
+        .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Smoothing"))
+        .unwrap();
+    assert!(smoothing_row["value"]
+        .as_str()
+        .unwrap()
+        .contains("Stupid Backoff"));
+}
+
+#[test]
+fn test_lang_json() {
+    let out = txtstat(&["lang", "tests/fixtures/prose.txt", "--format", "json"]);
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    let records = parsed.as_array().unwrap();
+    let lang_row = records
+        .iter()
+        .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Language"))
+        .expect("missing Language row");
+    assert_eq!(lang_row["value"].as_str().unwrap(), "English");
+}
+
+#[test]
+fn test_lang_french() {
+    let out = txtstat(&["lang", "tests/fixtures/french.txt", "--format", "json"]);
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    let records = parsed.as_array().unwrap();
+    let lang_row = records
+        .iter()
+        .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Language"))
+        .expect("missing Language row");
+    assert_eq!(lang_row["value"].as_str().unwrap(), "Français");
+}
+
+#[test]
+fn test_tokens_with_bpe() {
+    let out = txtstat(&[
+        "tokens",
+        "tests/fixtures/prose.txt",
+        "--model",
+        "gpt4",
+        "--format",
+        "json",
+    ]);
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    let records = parsed.as_array().unwrap();
+    let bpe_row = records
+        .iter()
+        .find(|r| {
+            r.get("tokenizer")
+                .and_then(|t| t.as_str())
+                .map(|s| s.contains("GPT-4"))
+                .unwrap_or(false)
+        })
+        .expect("missing BPE (GPT-4) row");
+    let count: usize = bpe_row["tokens"]
+        .as_str()
+        .unwrap()
+        .replace(',', "")
+        .parse()
+        .unwrap();
+    assert!(count > 0, "BPE token count should be positive");
+}
+
+#[test]
+fn test_tokens_backward_compatible() {
+    let out = txtstat(&[
+        "tokens",
+        "tests/fixtures/prose.txt",
+        "--format",
+        "json",
+    ]);
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    let records = parsed.as_array().unwrap();
+    assert_eq!(records.len(), 3, "without --model, should have exactly 3 rows");
+    let tokenizers: Vec<&str> = records
+        .iter()
+        .map(|r| r["tokenizer"].as_str().unwrap())
+        .collect();
+    assert!(!tokenizers.iter().any(|t| t.contains("BPE")), "no BPE rows without --model");
+}

@@ -1,4 +1,6 @@
+pub mod bpe;
 pub mod counter;
+pub mod detect;
 pub mod entropy;
 pub mod lm;
 pub mod ngram;

@@ -1,4 +1,5 @@
 pub mod entropy;
+pub mod lang;
 pub mod ngrams;
 pub mod perplexity;
 pub mod readability;
