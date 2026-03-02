@@ -1,4 +1,7 @@
+mod analysis;
 mod cli;
+mod input;
+mod output;
 
 use clap::Parser;
 use cli::Cli;
