@@ -6,5 +6,5 @@
   "types": "corpa.d.ts",
   "files": ["corpa_bg.wasm", "corpa.js", "corpa.d.ts"],
   "keywords": ["nlp", "text-analysis", "wasm", "rust"],
-  "license": "MIT OR Apache-2.0"
+  "license": "MIT"
 }
