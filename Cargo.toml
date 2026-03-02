@@ -1,0 +1,24 @@
+[package]
+name = "txtstat"
+version = "0.1.0"
+edition = "2021"
+description = "The ripgrep of text analysis. Blazing-fast CLI for corpus-level NLP statistics."
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1"
+comfy-table = "7"
+unicode-segmentation = "1"
+memmap2 = "0"
+rustc-hash = "2"
+anyhow = "1"
+indicatif = "0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
