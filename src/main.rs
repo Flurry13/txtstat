@@ -3,6 +3,7 @@ mod cli;
 mod commands;
 mod input;
 mod output;
+mod streaming;
 mod utils;
 
 use anyhow::Result;
@@ -21,6 +22,26 @@ fn load_stopwords(arg: &Option<String>) -> Result<Option<FxHashSet<String>>> {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+
+    if cli.stream {
+        match &cli.command {
+            cli::Commands::Stats { .. } => {
+                return streaming::stream_stats(&cli.format, cli.chunk_lines);
+            }
+            cli::Commands::Ngrams { n, top, .. } => {
+                return streaming::stream_ngrams(&cli.format, cli.chunk_lines, *n, *top);
+            }
+            cli::Commands::Entropy { .. } => {
+                return streaming::stream_entropy(&cli.format, cli.chunk_lines);
+            }
+            cli::Commands::Tokens { .. } => return streaming::unsupported("tokens"),
+            cli::Commands::Readability { .. } => return streaming::unsupported("readability"),
+            cli::Commands::Lang { .. } => return streaming::unsupported("lang"),
+            cli::Commands::Perplexity { .. } => return streaming::unsupported("perplexity"),
+            cli::Commands::Zipf { .. } => return streaming::unsupported("zipf"),
+            cli::Commands::Completions { .. } => return streaming::unsupported("completions"),
+        }
+    }
 
     match &cli.command {
         cli::Commands::Stats {

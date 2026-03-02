@@ -11,6 +11,13 @@ pub struct Cli {
     #[arg(long, global = true, default_value = "table")]
     pub format: OutputFormat,
 
+    /// Process stdin as a continuous stream, emitting results per chunk
+    #[arg(long, global = true)]
+    pub stream: bool,
+
+    /// Lines per chunk in streaming mode
+    #[arg(long, global = true, default_value = "1000")]
+    pub chunk_lines: usize,
 }
 
 #[derive(Subcommand)]
