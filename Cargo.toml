@@ -3,7 +3,7 @@ members = [".", "corpa-python", "corpa-wasm"]
 
 [package]
 name = "corpa"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "The ripgrep of text analysis. Blazing-fast CLI for corpus-level NLP statistics."
 license = "MIT"
