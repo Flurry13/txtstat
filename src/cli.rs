@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "txtstat", version, about = "The ripgrep of text analysis.")]
+#[command(name = "lexis", version, about = "The ripgrep of text analysis.")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,

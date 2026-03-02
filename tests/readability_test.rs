@@ -1,4 +1,4 @@
-use txtstat::analysis::readability;
+use lexis::analysis::readability;
 
 #[test]
 fn test_compute_metrics_basic() {

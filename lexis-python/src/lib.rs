@@ -20,7 +20,7 @@ fn result_to_dict<'py>(py: Python<'py>, json_str: &str) -> PyResult<Bound<'py, P
 #[pyo3(signature = (path=None, *, text=None))]
 fn stats(py: Python<'_>, path: Option<String>, text: Option<String>) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_stats(&t, None);
+    let result = lexis_core::results::compute_stats(&t, None);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
@@ -35,7 +35,7 @@ fn ngrams(
     top: usize,
 ) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_ngrams(&t, n, top, None, false, None);
+    let result = lexis_core::results::compute_ngrams(&t, n, top, None, false, None);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
@@ -48,7 +48,7 @@ fn entropy(
     text: Option<String>,
 ) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_entropy(&t);
+    let result = lexis_core::results::compute_entropy(&t);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
@@ -61,7 +61,7 @@ fn readability(
     text: Option<String>,
 ) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_readability(&t);
+    let result = lexis_core::results::compute_readability(&t);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
@@ -77,7 +77,7 @@ fn perplexity<'py>(
     k: f64,
 ) -> PyResult<Bound<'py, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_perplexity(&t, order, smoothing, k);
+    let result = lexis_core::results::compute_perplexity(&t, order, smoothing, k);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
@@ -86,7 +86,7 @@ fn perplexity<'py>(
 #[pyo3(signature = (path=None, *, text=None))]
 fn lang(py: Python<'_>, path: Option<String>, text: Option<String>) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    match txtstat_core::results::compute_lang(&t) {
+    match lexis_core::results::compute_lang(&t) {
         Some(result) => {
             let json = serde_json::to_string(&result).unwrap();
             result_to_dict(py, &json)
@@ -103,7 +103,7 @@ fn tokens(
     text: Option<String>,
 ) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_tokens(&t, true);
+    let result = lexis_core::results::compute_tokens(&t, true);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
@@ -117,13 +117,13 @@ fn zipf(
     top: usize,
 ) -> PyResult<Bound<'_, PyAny>> {
     let t = read_text(py, path, text)?;
-    let result = txtstat_core::results::compute_zipf(&t, top);
+    let result = lexis_core::results::compute_zipf(&t, top);
     let json = serde_json::to_string(&result).unwrap();
     result_to_dict(py, &json)
 }
 
 #[pymodule]
-mod txtstat {
+mod lexis {
     #[pymodule_export]
     use super::stats;
     #[pymodule_export]

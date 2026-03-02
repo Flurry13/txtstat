@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use txtstat::analysis::entropy;
+use lexis::analysis::entropy;
 
 fn make_freqs(pairs: &[(&str, usize)]) -> FxHashMap<String, usize> {
     pairs.iter().map(|(k, v)| (k.to_string(), *v)).collect()

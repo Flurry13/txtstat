@@ -1,5 +1,5 @@
 use rustc_hash::FxHashSet;
-use txtstat::utils::stopwords;
+use lexis::utils::stopwords;
 
 #[test]
 fn test_default_english_not_empty() {

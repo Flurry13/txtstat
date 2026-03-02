@@ -1,4 +1,4 @@
-use txtstat::results;
+use lexis::results;
 
 #[test]
 fn test_compute_stats() {

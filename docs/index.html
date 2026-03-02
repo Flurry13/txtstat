@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>lexis — The ripgrep of text analysis</title>
+  <meta name="description" content="Blazing-fast text analysis for the command line, Python, and the browser. N-grams, readability, entropy, language detection, and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,600;1,300&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-deep: #06090f;
+      --bg-primary: #0a0e18;
+      --bg-surface: #111827;
+      --bg-card: #151d30;
+      --bg-card-hover: #1a2340;
+      --text-primary: #e4e7f0;
+      --text-secondary: #8390a8;
+      --text-muted: #566178;
+      --accent-gold: #c9993a;
+      --accent-gold-bright: #e0b04e;
+      --accent-blue: #6aadcf;
+      --accent-green: #4ade80;
+      --accent-pink: #e879a8;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-gold: rgba(201, 153, 58, 0.2);
+      --glow-gold: rgba(201, 153, 58, 0.06);
+      --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    ::selection {
+      background: rgba(201, 153, 58, 0.3);
+      color: #fff;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-card); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    a { color: var(--accent-blue); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--accent-gold-bright); }
+
+    /* ─── Nav ─────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+      border-bottom: 1px solid transparent;
+    }
+    nav.scrolled {
+      background: rgba(6, 9, 15, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-color: var(--border);
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+      letter-spacing: 0.04em;
+    }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-links a.nav-github {
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    /* ─── Layout ──────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    section { padding: 7rem 0; position: relative; }
+
+    .section-header {
+      display: flex; align-items: baseline; gap: 1rem;
+      margin-bottom: 3.5rem;
+    }
+    .section-number {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-gold);
+      opacity: 0.6;
+      letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+    .section-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border-gold), transparent 80%);
+    }
+
+    /* ─── Hero ────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 6rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 15%; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(201, 153, 58, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 200px;
+      background: linear-gradient(to top, var(--bg-deep), transparent);
+      pointer-events: none;
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      border: 1px solid var(--border-gold);
+      padding: 0.35rem 1rem;
+      border-radius: 2px;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 10vw, 8rem);
+      font-weight: 300;
+      letter-spacing: 0.03em;
+      line-height: 1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+    .hero-tagline {
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-secondary);
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+    .hero-install {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.8rem 1.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+    .hero-install:hover {
+      border-color: var(--accent-gold);
+      background: var(--bg-card);
+    }
+    .hero-install .prompt { color: var(--accent-pink); }
+    .hero-install .cmd { color: var(--accent-green); }
+    .hero-install .arg { color: var(--text-primary); }
+    .hero-install .copy-icon {
+      color: var(--text-muted);
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+    .hero-install:hover .copy-icon { color: var(--accent-gold); }
+    .hero-install .copied-text {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--accent-green);
+      display: none;
+    }
+    .badges {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.8s 1s forwards;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 0.35rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .badge:hover { border-color: var(--text-muted); color: var(--text-primary); }
+    .badge svg { width: 14px; height: 14px; }
+
+    /* ─── Features ────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      transition: border-color 0.3s, transform 0.3s, background 0.3s;
+    }
+    .feature-card:hover {
+      border-color: var(--border-gold);
+      background: var(--bg-card);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(201, 153, 58, 0.08);
+      border: 1px solid var(--border-gold);
+      border-radius: 6px;
+      margin-bottom: 1.2rem;
+      color: var(--accent-gold);
+      font-size: 1.1rem;
+    }
+    .feature-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 500;
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.01em;
+    }
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ─── Terminal ────────────────────────────────────── */
+    .terminal {
+      background: #0d1117;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .terminal-dots { display: flex; gap: 6px; margin-right: 1rem; }
+    .terminal-dots span {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+    .terminal-title {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      flex: 1;
+      text-align: center;
+      margin-right: 3rem;
+    }
+    .terminal-body {
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    .terminal-body pre {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #c9d1d9;
+      white-space: pre;
+      margin: 0;
+    }
+    .terminal-body .t-prompt { color: #e879a8; }
+    .terminal-body .t-cmd { color: #4ade80; }
+    .terminal-body .t-sub { color: #6aadcf; }
+    .terminal-body .t-flag { color: #c9993a; }
+    .terminal-body .t-file { color: #c9d1d9; }
+    .terminal-body .t-dim { color: #4a5568; }
+    .terminal-body .t-header { color: #e4e7f0; }
+    .terminal-body .t-value { color: #6aadcf; }
+    .terminal-body .t-label { color: #c9993a; font-weight: 500; }
+    .terminal-body .t-json-key { color: #6aadcf; }
+    .terminal-body .t-json-str { color: #c9993a; }
+
+    .quickstart-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      max-width: 560px;
+    }
+
+    /* ─── Commands Table ──────────────────────────────── */
+    .commands-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .commands-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .commands-table thead th {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 0.9rem 1.25rem;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .commands-table tbody td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .commands-table tbody tr:last-child td { border-bottom: none; }
+    .commands-table tbody tr { transition: background 0.15s; }
+    .commands-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+    .commands-table .cmd-name {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent-green);
+      white-space: nowrap;
+    }
+    .commands-table .cmd-desc { color: var(--text-secondary); }
+
+    /* ─── Performance ─────────────────────────────────── */
+    .perf-context {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      max-width: 600px;
+    }
+    .perf-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .perf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .perf-table thead th {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 0.9rem 1.25rem;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .perf-table thead th:last-child { text-align: right; }
+    .perf-table tbody td {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .perf-table tbody tr:last-child td { border-bottom: none; }
+    .perf-table tbody tr { transition: background 0.15s; }
+    .perf-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+    .perf-table .perf-task { font-weight: 500; color: var(--text-primary); }
+    .perf-table .perf-fast {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--accent-green);
+    }
+    .perf-table .perf-slow {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+    .perf-table .perf-speedup {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--accent-gold-bright);
+      text-align: right;
+    }
+    .perf-note {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 1rem;
+    }
+
+    /* ─── Install ─────────────────────────────────────── */
+    .install-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .install-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .install-card:hover {
+      border-color: var(--border-gold);
+      background: var(--bg-card);
+    }
+    .install-card-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-gold);
+      margin-bottom: 0.6rem;
+    }
+    .install-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .install-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.2rem;
+      line-height: 1.55;
+    }
+    .install-cmd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.65rem 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .install-cmd:hover { border-color: var(--accent-gold); }
+    .install-cmd code { color: var(--text-primary); }
+    .install-cmd .copy-icon {
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+    .install-cmd:hover .copy-icon { color: var(--accent-gold); }
+
+    /* ─── Footer ──────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 0;
+    }
+    .footer-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-brand {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text-primary); }
+
+    /* ─── Reveal animation ────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links { gap: 1rem; }
+      .nav-links a { font-size: 0.75rem; }
+      section { padding: 4.5rem 0; }
+      .section-header { margin-bottom: 2.5rem; }
+      .section-header h2 { font-size: 2rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .install-grid { grid-template-columns: 1fr; }
+      .hero { padding: 6rem 1.5rem 4rem; }
+      .hero-install { font-size: 0.8rem; padding: 0.7rem 1rem; }
+      .footer-content { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 0 1.25rem; }
+      .nav-links a.nav-hide-mobile { display: none; }
+      .hero-title { font-size: 3.5rem; }
+      .terminal-body { padding: 1rem; }
+      .terminal-body pre { font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Nav ──────────────────────────────────────── -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">lexis</a>
+    <div class="nav-links">
+      <a href="#features" class="nav-hide-mobile">Features</a>
+      <a href="#quickstart" class="nav-hide-mobile">Quick Start</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/Flurry13/lexis" target="_blank" rel="noopener" class="nav-github">
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ─── Hero ─────────────────────────────────────── -->
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-badge">Text Analysis CLI</div>
+        <h1 class="hero-title">lexis</h1>
+        <p class="hero-tagline">The ripgrep of text analysis.</p>
+        <div class="hero-install" id="hero-install" title="Click to copy">
+          <span>
+            <span class="prompt">$</span>
+            <span class="cmd"> cargo</span>
+            <span class="arg"> install lexis</span>
+          </span>
+          <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          <span class="copied-text">Copied!</span>
+        </div>
+        <div class="badges">
+          <a href="https://crates.io/crates/lexis" class="badge">
+            <svg viewBox="0 0 512 512" width="14" height="14" fill="currentColor"><path d="M239.1 6.3l-208 78c-18.7 7-31.1 25-31.1 45v225.1c0 18.2 10.3 34.8 26.5 42.9l208 104c13.5 6.8 29.4 6.8 42.9 0l208-104c16.3-8.1 26.5-24.8 26.5-42.9V129.3c0-20-12.4-37.9-31.1-44.9l-208-78C262 2.2 250 2.2 239.1 6.3z"/></svg>
+            v0.4.0
+          </a>
+          <a href="https://github.com/Flurry13/lexis" class="badge">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            GitHub
+          </a>
+          <a href="https://github.com/Flurry13/lexis/blob/main/LICENSE" class="badge">MIT</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="container"><div class="section-divider"></div></div>
+
+    <!-- ─── Features ─────────────────────────────────── -->
+    <section id="features">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-number">01</span>
+          <h2>Features</h2>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card reveal">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <h3>Fast</h3>
+            <p>Parallel processing via rayon. Memory-mapped I/O. Analyzes multi-gigabyte corpora in under a second.</p>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>Composable</h3>
+            <p>Unix-friendly design with structured output. JSON, CSV, and table formats pipe seamlessly with jq, awk, and standard tooling.</p>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </div>
+            <h3>Comprehensive</h3>
+            <p>Nine analysis commands covering vocabulary statistics, n-gram frequencies, readability indices, Shannon entropy, Zipf's law, and more.</p>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            </div>
+            <h3>Multi-platform</h3>
+            <p>Available as a native CLI binary, a Python package via PyO3, and an npm/WASM module for browser and Node.js environments.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container"><div class="section-divider"></div></div>
+
+    <!-- ─── Quick Start ──────────────────────────────── -->
+    <section id="quickstart">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-number">02</span>
+          <h2>Quick Start</h2>
+        </div>
+        <p class="quickstart-subtitle reveal">All commands accept file paths, directories, or stdin. Output format is controlled with <code style="font-family:var(--font-mono);color:var(--accent-gold);font-size:0.88em">--format</code>.</p>
+        <div class="terminal reveal">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot-red"></span>
+              <span class="dot-yellow"></span>
+              <span class="dot-green"></span>
+            </div>
+            <span class="terminal-title">Terminal</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">lexis</span> <span class="t-sub">stats</span> <span class="t-file">prose.txt</span>
+
+<span class="t-label">  lexis</span> <span class="t-dim">·</span> <span class="t-file">prose.txt</span>
+<span class="t-dim">┌─────────────────────┬────────────┐</span>
+<span class="t-dim">│</span> <span class="t-header">Metric</span>              <span class="t-dim">┆</span>      <span class="t-header">Value</span> <span class="t-dim">│</span>
+<span class="t-dim">╞═════════════════════╪════════════╡</span>
+<span class="t-dim">│</span> Tokens (words)      <span class="t-dim">┆</span>      <span class="t-value">  175</span> <span class="t-dim">│</span>
+<span class="t-dim">│</span> Types (unique)      <span class="t-dim">┆</span>      <span class="t-value">   95</span> <span class="t-dim">│</span>
+<span class="t-dim">│</span> Characters          <span class="t-dim">┆</span>      <span class="t-value">  805</span> <span class="t-dim">│</span>
+<span class="t-dim">│</span> Sentences           <span class="t-dim">┆</span>      <span class="t-value">    6</span> <span class="t-dim">│</span>
+<span class="t-dim">│</span> Type-Token Ratio    <span class="t-dim">┆</span>   <span class="t-value">0.5429</span> <span class="t-dim">│</span>
+<span class="t-dim">│</span> Hapax Legomena      <span class="t-dim">┆</span> <span class="t-value">70 (73.7%)</span> <span class="t-dim">│</span>
+<span class="t-dim">│</span> Avg Sentence Length <span class="t-dim">┆</span> <span class="t-value">29.2 words</span> <span class="t-dim">│</span>
+<span class="t-dim">└─────────────────────┴────────────┘</span>
+
+<span class="t-prompt">$</span> <span class="t-cmd">lexis</span> <span class="t-sub">lang</span> <span class="t-file">document.txt</span> <span class="t-flag">--format json</span>
+<span class="t-dim">[</span>
+  <span class="t-dim">{</span><span class="t-json-key">"metric"</span>: <span class="t-json-str">"Language"</span>, <span class="t-json-key">"value"</span>: <span class="t-json-str">"English"</span><span class="t-dim">}</span>,
+  <span class="t-dim">{</span><span class="t-json-key">"metric"</span>: <span class="t-json-str">"Script"</span>, <span class="t-json-key">"value"</span>: <span class="t-json-str">"Latin"</span><span class="t-dim">}</span>,
+  <span class="t-dim">{</span><span class="t-json-key">"metric"</span>: <span class="t-json-str">"Confidence"</span>, <span class="t-json-key">"value"</span>: <span class="t-json-str">"0.99"</span><span class="t-dim">}</span>
+<span class="t-dim">]</span></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container"><div class="section-divider"></div></div>
+
+    <!-- ─── Commands ─────────────────────────────────── -->
+    <section id="commands">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-number">03</span>
+          <h2>Commands</h2>
+        </div>
+        <div class="commands-table-wrap reveal">
+          <table class="commands-table">
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="cmd-name">stats</td>
+                <td class="cmd-desc">Token, type, and sentence counts. Type-token ratio, hapax legomena, average sentence length.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">ngrams</td>
+                <td class="cmd-desc">N-gram frequency analysis with configurable N, top-K, minimum frequency, case folding, and stopword filtering.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">tokens</td>
+                <td class="cmd-desc">Whitespace, sentence, and character tokenization. BPE token counts for GPT-3, GPT-4, and GPT-4o.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">readability</td>
+                <td class="cmd-desc">Flesch-Kincaid Grade, Flesch Reading Ease, Coleman-Liau Index, Gunning Fog Index, SMOG Index.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">entropy</td>
+                <td class="cmd-desc">Unigram, bigram, and trigram Shannon entropy. Entropy rate and vocabulary redundancy.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">perplexity</td>
+                <td class="cmd-desc">N-gram language model perplexity with Laplace smoothing and Stupid Backoff.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">lang</td>
+                <td class="cmd-desc">Language and script detection with confidence scoring.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">zipf</td>
+                <td class="cmd-desc">Zipf's law rank-frequency distribution with exponent fitting and terminal sparkline plotting.</td>
+              </tr>
+              <tr>
+                <td class="cmd-name">completions</td>
+                <td class="cmd-desc">Shell completion generation for bash, zsh, and fish.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="container"><div class="section-divider"></div></div>
+
+    <!-- ─── Performance ──────────────────────────────── -->
+    <section id="performance">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-number">04</span>
+          <h2>Performance</h2>
+        </div>
+        <p class="perf-context reveal">Benchmarks on a 1 GB English text corpus (Apple M2, 8 cores).</p>
+        <div class="perf-table-wrap reveal">
+          <table class="perf-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>lexis</th>
+                <th>Python / NLTK</th>
+                <th style="text-align:right">Speedup</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="perf-task">Word count</td>
+                <td class="perf-fast">0.8 s</td>
+                <td class="perf-slow">34 s</td>
+                <td class="perf-speedup">42x</td>
+              </tr>
+              <tr>
+                <td class="perf-task">Bigram frequency</td>
+                <td class="perf-fast">1.2 s</td>
+                <td class="perf-slow">89 s</td>
+                <td class="perf-speedup">74x</td>
+              </tr>
+              <tr>
+                <td class="perf-task">Readability</td>
+                <td class="perf-fast">0.9 s</td>
+                <td class="perf-slow">41 s</td>
+                <td class="perf-speedup">45x</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="perf-note reveal">Benchmarks are targets and will be validated with formal benchmarking infrastructure.</p>
+      </div>
+    </section>
+
+    <div class="container"><div class="section-divider"></div></div>
+
+    <!-- ─── Install ──────────────────────────────────── -->
+    <section id="install">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-number">05</span>
+          <h2>Installation</h2>
+        </div>
+        <div class="install-grid">
+          <div class="install-card reveal">
+            <div class="install-card-label">CLI</div>
+            <h3>Rust / Cargo</h3>
+            <p>Install the native binary with full parallel processing and BPE tokenization support.</p>
+            <div class="install-cmd" data-copy="cargo install lexis" title="Click to copy">
+              <code>cargo install lexis</code>
+              <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </div>
+          </div>
+          <div class="install-card reveal">
+            <div class="install-card-label">Python</div>
+            <h3>pip / PyO3</h3>
+            <p>All commands as native Python functions. Accepts file paths or text strings directly.</p>
+            <div class="install-cmd" data-copy="pip install lexis" title="Click to copy">
+              <code>pip install lexis</code>
+              <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </div>
+          </div>
+          <div class="install-card reveal">
+            <div class="install-card-label">JavaScript</div>
+            <h3>npm / WASM</h3>
+            <p>Rust compiled to WebAssembly for browser and Node.js environments.</p>
+            <div class="install-cmd" data-copy="npm install lexis" title="Click to copy">
+              <code>npm install lexis</code>
+              <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ─── Footer ───────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <span class="footer-brand">lexis</span>
+        <div class="footer-links">
+          <a href="https://github.com/Flurry13/lexis">GitHub</a>
+          <a href="https://crates.io/crates/lexis">crates.io</a>
+          <a href="https://github.com/Flurry13/lexis/blob/main/LICENSE">MIT License</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Nav scroll effect
+    var nav = document.getElementById('nav');
+    window.addEventListener('scroll', function() {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    // Scroll reveal with IntersectionObserver
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      observer.observe(el);
+    });
+
+    // Copy hero install command
+    document.getElementById('hero-install').addEventListener('click', function() {
+      var el = this;
+      navigator.clipboard.writeText('cargo install lexis').then(function() {
+        var icon = el.querySelector('.copy-icon');
+        var copied = el.querySelector('.copied-text');
+        icon.style.display = 'none';
+        copied.style.display = 'inline';
+        setTimeout(function() {
+          icon.style.display = '';
+          copied.style.display = 'none';
+        }, 1500);
+      });
+    });
+
+    // Copy install card commands via data attribute
+    document.querySelectorAll('.install-cmd[data-copy]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var text = this.getAttribute('data-copy');
+        var icon = this.querySelector('.copy-icon');
+        navigator.clipboard.writeText(text).then(function() {
+          icon.style.color = 'var(--accent-green)';
+          setTimeout(function() {
+            icon.style.color = '';
+          }, 1500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

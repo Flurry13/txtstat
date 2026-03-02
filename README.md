@@ -1,6 +1,6 @@
 <div align="center">
 
-# txtstat
+# lexis
 
 **Blazing-fast text analysis for the command line, Python, and the browser.**
 
@@ -27,27 +27,27 @@ A unified tool for corpus-level NLP statistics — n-gram frequencies, readabili
 ### CLI
 
 ```bash
-cargo install txtstat
+cargo install lexis
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/Flurry13/txtstat
-cd txtstat
+git clone https://github.com/Flurry13/lexis
+cd lexis
 cargo build --release
 ```
 
 ### Python
 
 ```bash
-pip install txtstat
+pip install lexis
 ```
 
 ### JavaScript / WASM
 
 ```bash
-npm install txtstat
+npm install lexis
 ```
 
 ---
@@ -57,14 +57,14 @@ npm install txtstat
 ### CLI
 
 ```bash
-txtstat stats corpus.txt
-txtstat ngrams -n 2 --top 20 corpus.txt
-txtstat readability essay.txt
-txtstat entropy corpus.txt
-txtstat perplexity corpus.txt --smoothing laplace
-txtstat lang mystery.txt
-txtstat tokens corpus.txt --model gpt4
-txtstat zipf corpus.txt --top 10
+lexis stats corpus.txt
+lexis ngrams -n 2 --top 20 corpus.txt
+lexis readability essay.txt
+lexis entropy corpus.txt
+lexis perplexity corpus.txt --smoothing laplace
+lexis lang mystery.txt
+lexis tokens corpus.txt --model gpt4
+lexis zipf corpus.txt --top 10
 ```
 
 All commands accept file paths, directories (with `--recursive`), or stdin. Output format is controlled with `--format` (`table`, `json`, `csv`).
@@ -72,15 +72,15 @@ All commands accept file paths, directories (with `--recursive`), or stdin. Outp
 ### Python
 
 ```python
-import txtstat
+import lexis
 
-txtstat.stats(text="The quick brown fox jumps over the lazy dog.")
+lexis.stats(text="The quick brown fox jumps over the lazy dog.")
 # {'tokens': 9, 'types': 8, 'sentences': 1, 'type_token_ratio': 0.8889, ...}
 
-txtstat.ngrams("corpus.txt", n=2, top=10)
+lexis.ngrams("corpus.txt", n=2, top=10)
 # [{'ngram': 'of the', 'frequency': 4521, 'relative_pct': 2.09}, ...]
 
-txtstat.lang(text="Bonjour le monde")
+lexis.lang(text="Bonjour le monde")
 # {'language': 'Français', 'code': 'fra', 'script': 'Latin', 'confidence': 0.99}
 ```
 
@@ -89,7 +89,7 @@ All functions accept a file path as the first argument or a `text=` keyword argu
 ### JavaScript / WASM
 
 ```javascript
-import { stats, lang, entropy } from 'txtstat';
+import { stats, lang, entropy } from 'lexis';
 
 const result = stats("The quick brown fox jumps over the lazy dog.");
 // { tokens: 9, types: 8, sentences: 1, type_token_ratio: 0.8889, ... }
@@ -119,9 +119,9 @@ All functions accept text strings directly and return plain JavaScript objects.
 ### Example Output
 
 ```
-$ txtstat stats prose.txt
+$ lexis stats prose.txt
 
-  txtstat · prose.txt
+  lexis · prose.txt
 ┌─────────────────────┬────────────┐
 │ Metric              ┆      Value │
 ╞═════════════════════╪════════════╡
@@ -136,9 +136,9 @@ $ txtstat stats prose.txt
 ```
 
 ```
-$ txtstat readability prose.txt
+$ lexis readability prose.txt
 
-  txtstat · prose.txt
+  lexis · prose.txt
 ┌──────────────────────┬───────┬─────────────┐
 │ Metric               ┆ Score ┆       Grade │
 ╞══════════════════════╪═══════╪═════════════╡
@@ -151,9 +151,9 @@ $ txtstat readability prose.txt
 ```
 
 ```
-$ txtstat tokens prose.txt --model all
+$ lexis tokens prose.txt --model all
 
-  txtstat · prose.txt
+  lexis · prose.txt
 ┌──────────────┬────────┐
 │ Tokenizer    ┆ Tokens │
 ╞══════════════╪════════╡
@@ -173,7 +173,7 @@ $ txtstat tokens prose.txt --model all
 The `--stream` flag enables incremental processing of unbounded stdin, emitting cumulative results after each chunk. Chunk size is configurable with `--chunk-lines` (default: 1000).
 
 ```bash
-cat huge_corpus.txt | txtstat stats --stream --chunk-lines 500 --format json
+cat huge_corpus.txt | lexis stats --stream --chunk-lines 500 --format json
 ```
 
 Supported commands: `stats`, `ngrams`, `entropy`.
@@ -201,7 +201,7 @@ Supported commands: `stats`, `ngrams`, `entropy`.
 
 Benchmarks on a 1GB English text corpus (Apple M2, 8 cores):
 
-| Command | txtstat | Python (NLTK) | Speedup |
+| Command | lexis | Python (NLTK) | Speedup |
 |---------|---------|---------------|---------|
 | Word count | 0.8s | 34s | **42x** |
 | Bigram frequency | 1.2s | 89s | **74x** |

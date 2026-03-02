@@ -1,4 +1,4 @@
-use txtstat::analysis::counter;
+use lexis::analysis::counter;
 
 #[test]
 fn test_word_frequencies() {

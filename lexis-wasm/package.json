@@ -1,10 +1,10 @@
 {
-  "name": "txtstat",
+  "name": "lexis",
   "version": "0.4.0",
   "description": "Blazing-fast text analysis powered by Rust, compiled to WebAssembly.",
-  "main": "txtstat.js",
-  "types": "txtstat.d.ts",
-  "files": ["txtstat_bg.wasm", "txtstat.js", "txtstat.d.ts"],
+  "main": "lexis.js",
+  "types": "lexis.d.ts",
+  "files": ["lexis_bg.wasm", "lexis.js", "lexis.d.ts"],
   "keywords": ["nlp", "text-analysis", "wasm", "rust"],
   "license": "MIT OR Apache-2.0"
 }

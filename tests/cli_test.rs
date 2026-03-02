@@ -1,16 +1,16 @@
 use std::process::Command;
 
-fn txtstat(args: &[&str]) -> String {
-    let output = Command::new(env!("CARGO_BIN_EXE_txtstat"))
+fn lexis(args: &[&str]) -> String {
+    let output = Command::new(env!("CARGO_BIN_EXE_lexis"))
         .args(args)
         .output()
-        .expect("failed to run txtstat");
+        .expect("failed to run lexis");
     String::from_utf8(output.stdout).unwrap()
 }
 
 #[test]
 fn test_stats_json() {
-    let out = txtstat(&["stats", "tests/fixtures/small.txt", "--format", "json"]);
+    let out = lexis(&["stats", "tests/fixtures/small.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     let tokens_row = records
@@ -28,7 +28,7 @@ fn test_stats_json() {
 
 #[test]
 fn test_stats_table_output() {
-    let out = txtstat(&["stats", "tests/fixtures/small.txt"]);
+    let out = lexis(&["stats", "tests/fixtures/small.txt"]);
     assert!(out.contains("Tokens"));
     assert!(out.contains("Types"));
     assert!(out.contains("Type-Token Ratio"));
@@ -36,13 +36,13 @@ fn test_stats_table_output() {
 
 #[test]
 fn test_stats_csv() {
-    let out = txtstat(&["stats", "tests/fixtures/small.txt", "--format", "csv"]);
+    let out = lexis(&["stats", "tests/fixtures/small.txt", "--format", "csv"]);
     assert!(out.contains("Metric,Value"));
 }
 
 #[test]
 fn test_ngrams_bigrams_json() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "ngrams",
         "-n",
         "2",
@@ -59,7 +59,7 @@ fn test_ngrams_bigrams_json() {
 
 #[test]
 fn test_ngrams_case_insensitive() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "ngrams",
         "--case-insensitive",
         "tests/fixtures/small.txt",
@@ -72,7 +72,7 @@ fn test_ngrams_case_insensitive() {
 
 #[test]
 fn test_tokens_command() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "tokens",
         "tests/fixtures/small.txt",
         "--format",
@@ -85,14 +85,14 @@ fn test_tokens_command() {
 
 #[test]
 fn test_stats_empty_file() {
-    let out = txtstat(&["stats", "tests/fixtures/empty.txt", "--format", "json"]);
+    let out = lexis(&["stats", "tests/fixtures/empty.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert!(!parsed.as_array().unwrap().is_empty());
 }
 
 #[test]
 fn test_stats_single_word() {
-    let out = txtstat(&["stats", "tests/fixtures/single-word.txt", "--format", "json"]);
+    let out = lexis(&["stats", "tests/fixtures/single-word.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     let tokens_row = records.iter().find(|r| {
@@ -104,7 +104,7 @@ fn test_stats_single_word() {
 #[test]
 fn test_stdin_input() {
     use std::io::Write;
-    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_txtstat"))
+    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_lexis"))
         .args(&["stats", "--format", "json"])
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
@@ -122,7 +122,7 @@ fn test_stdin_input() {
 
 #[test]
 fn test_readability_json() {
-    let out = txtstat(&["readability", "tests/fixtures/prose.txt", "--format", "json"]);
+    let out = lexis(&["readability", "tests/fixtures/prose.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     assert_eq!(records.len(), 5, "expected 5 readability metrics");
@@ -136,7 +136,7 @@ fn test_readability_json() {
 
 #[test]
 fn test_readability_table() {
-    let out = txtstat(&["readability", "tests/fixtures/prose.txt"]);
+    let out = lexis(&["readability", "tests/fixtures/prose.txt"]);
     assert!(out.contains("Flesch-Kincaid Grade"));
     assert!(out.contains("Score"));
     assert!(out.contains("Grade"));
@@ -144,7 +144,7 @@ fn test_readability_table() {
 
 #[test]
 fn test_entropy_json() {
-    let out = txtstat(&["entropy", "tests/fixtures/prose.txt", "--format", "json"]);
+    let out = lexis(&["entropy", "tests/fixtures/prose.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     assert!(records.len() >= 6, "expected at least 6 entropy rows");
@@ -152,7 +152,7 @@ fn test_entropy_json() {
 
 #[test]
 fn test_zipf_json() {
-    let out = txtstat(&["zipf", "tests/fixtures/prose.txt", "--format", "json", "--top", "5"]);
+    let out = lexis(&["zipf", "tests/fixtures/prose.txt", "--format", "json", "--top", "5"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     assert!(records.len() >= 5, "expected at least 5 zipf rows, got {}", records.len());
@@ -160,14 +160,14 @@ fn test_zipf_json() {
 
 #[test]
 fn test_zipf_plot() {
-    let out = txtstat(&["zipf", "--plot", "tests/fixtures/prose.txt"]);
+    let out = lexis(&["zipf", "--plot", "tests/fixtures/prose.txt"]);
     assert!(out.contains("Distribution"));
     assert!(out.contains("Zipf Exponent"));
 }
 
 #[test]
 fn test_ngrams_with_stopwords() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "ngrams",
         "--stopwords",
         "english",
@@ -190,7 +190,7 @@ fn test_ngrams_with_stopwords() {
 
 #[test]
 fn test_stats_with_stopwords() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "stats",
         "--stopwords",
         "english",
@@ -215,7 +215,7 @@ fn test_stats_with_stopwords() {
 
 #[test]
 fn test_ngrams_with_custom_stopwords_file() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "ngrams",
         "--stopwords",
         "tests/fixtures/stopwords_test.txt",
@@ -240,7 +240,7 @@ fn test_ngrams_with_custom_stopwords_file() {
 
 #[test]
 fn test_perplexity_json() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "perplexity",
         "tests/fixtures/prose.txt",
         "--format",
@@ -264,7 +264,7 @@ fn test_perplexity_json() {
 #[test]
 fn test_perplexity_smoothing_options() {
     // Test laplace
-    let out_laplace = txtstat(&[
+    let out_laplace = lexis(&[
         "perplexity",
         "tests/fixtures/prose.txt",
         "--smoothing",
@@ -281,7 +281,7 @@ fn test_perplexity_smoothing_options() {
     assert!(smoothing_row["value"].as_str().unwrap().contains("Add-k"));
 
     // Test backoff
-    let out_backoff = txtstat(&[
+    let out_backoff = lexis(&[
         "perplexity",
         "tests/fixtures/prose.txt",
         "--smoothing",
@@ -303,7 +303,7 @@ fn test_perplexity_smoothing_options() {
 
 #[test]
 fn test_lang_json() {
-    let out = txtstat(&["lang", "tests/fixtures/prose.txt", "--format", "json"]);
+    let out = lexis(&["lang", "tests/fixtures/prose.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     let lang_row = records
@@ -315,7 +315,7 @@ fn test_lang_json() {
 
 #[test]
 fn test_lang_french() {
-    let out = txtstat(&["lang", "tests/fixtures/french.txt", "--format", "json"]);
+    let out = lexis(&["lang", "tests/fixtures/french.txt", "--format", "json"]);
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     let records = parsed.as_array().unwrap();
     let lang_row = records
@@ -327,7 +327,7 @@ fn test_lang_french() {
 
 #[test]
 fn test_tokens_with_bpe() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "tokens",
         "tests/fixtures/prose.txt",
         "--model",
@@ -357,7 +357,7 @@ fn test_tokens_with_bpe() {
 
 #[test]
 fn test_tokens_backward_compatible() {
-    let out = txtstat(&[
+    let out = lexis(&[
         "tokens",
         "tests/fixtures/prose.txt",
         "--format",
@@ -377,18 +377,18 @@ fn test_tokens_backward_compatible() {
 
 #[test]
 fn test_completions_bash() {
-    let out = txtstat(&["completions", "bash"]);
-    assert!(out.contains("txtstat"), "bash completions should reference txtstat");
+    let out = lexis(&["completions", "bash"]);
+    assert!(out.contains("lexis"), "bash completions should reference lexis");
 }
 
 #[test]
 fn test_completions_zsh() {
-    let out = txtstat(&["completions", "zsh"]);
-    assert!(out.contains("txtstat"));
+    let out = lexis(&["completions", "zsh"]);
+    assert!(out.contains("lexis"));
 }
 
 #[test]
 fn test_completions_fish() {
-    let out = txtstat(&["completions", "fish"]);
-    assert!(out.contains("txtstat"));
+    let out = lexis(&["completions", "fish"]);
+    assert!(out.contains("lexis"));
 }

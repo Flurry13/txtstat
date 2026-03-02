@@ -1,4 +1,4 @@
-use txtstat::analysis::ngram;
+use lexis::analysis::ngram;
 
 #[test]
 fn test_bigrams() {

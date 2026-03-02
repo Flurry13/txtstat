@@ -1,12 +1,26 @@
 [workspace]
-members = [".", "txtstat-python", "txtstat-wasm"]
+members = [".", "lexis-python", "lexis-wasm"]
 
 [package]
-name = "txtstat"
+name = "lexis"
 version = "0.4.0"
 edition = "2021"
 description = "The ripgrep of text analysis. Blazing-fast CLI for corpus-level NLP statistics."
 license = "MIT"
+repository = "https://github.com/Flurry13/lexis"
+homepage = "https://flurry13.github.io/lexis"
+readme = "README.md"
+keywords = ["nlp", "text-analysis", "cli", "corpus", "linguistics"]
+categories = ["command-line-utilities", "text-processing"]
+exclude = [
+    ".worktrees/",
+    ".github/",
+    "lexis-python/",
+    "lexis-wasm/",
+    "docs/",
+    "tasks/",
+    "tests/fixtures/",
+]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

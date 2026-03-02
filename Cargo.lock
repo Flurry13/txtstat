@@ -366,6 +366,45 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "lexis"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "clap_complete",
+ "comfy-table",
+ "csv",
+ "memmap2",
+ "rayon",
+ "rustc-hash 2.1.1",
+ "serde",
+ "serde_json",
+ "tiktoken-rs",
+ "unicode-segmentation",
+ "whatlang",
+]
+
+[[package]]
+name = "lexis-python"
+version = "0.4.0"
+dependencies = [
+ "lexis",
+ "pyo3",
+ "serde_json",
+]
+
+[[package]]
+name = "lexis-wasm"
+version = "0.4.0"
+dependencies = [
+ "lexis",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.182"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -736,45 +775,6 @@ dependencies = [
  "parking_lot",
  "regex",
  "rustc-hash 1.1.0",
-]
-
-[[package]]
-name = "txtstat"
-version = "0.4.0"
-dependencies = [
- "anyhow",
- "clap",
- "clap_complete",
- "comfy-table",
- "csv",
- "memmap2",
- "rayon",
- "rustc-hash 2.1.1",
- "serde",
- "serde_json",
- "tiktoken-rs",
- "unicode-segmentation",
- "whatlang",
-]
-
-[[package]]
-name = "txtstat-python"
-version = "0.4.0"
-dependencies = [
- "pyo3",
- "serde_json",
- "txtstat",
-]
-
-[[package]]
-name = "txtstat-wasm"
-version = "0.4.0"
-dependencies = [
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
- "txtstat",
- "wasm-bindgen",
 ]
 
 [[package]]

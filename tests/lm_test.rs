@@ -1,4 +1,4 @@
-use txtstat::analysis::lm::{NgramLM, Smoothing};
+use lexis::analysis::lm::{NgramLM, Smoothing};
 
 fn sample_tokens() -> Vec<&'static str> {
     "the cat sat on the mat the cat sat on the hat"

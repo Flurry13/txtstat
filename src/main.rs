@@ -141,7 +141,7 @@ fn main() -> Result<()> {
         }
         cli::Commands::Completions { shell } => {
             let mut cmd = cli::Cli::command();
-            clap_complete::generate(*shell, &mut cmd, "txtstat", &mut std::io::stdout());
+            clap_complete::generate(*shell, &mut cmd, "lexis", &mut std::io::stdout());
         }
     }
 

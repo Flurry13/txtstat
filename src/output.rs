@@ -57,7 +57,7 @@ impl ResultTable {
             table.add_row(row.iter().map(|c| Cell::new(c)).collect::<Vec<_>>());
         }
 
-        format!("\n  txtstat · {}\n{}\n", self.title, table)
+        format!("\n  lexis · {}\n{}\n", self.title, table)
     }
 
     fn render_json(&self) -> Result<String> {

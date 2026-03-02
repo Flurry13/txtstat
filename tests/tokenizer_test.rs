@@ -1,4 +1,4 @@
-use txtstat::analysis::tokenizer;
+use lexis::analysis::tokenizer;
 
 #[test]
 fn test_word_tokenize_simple() {
