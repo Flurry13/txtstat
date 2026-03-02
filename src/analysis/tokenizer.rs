@@ -1,5 +1,3 @@
-use unicode_segmentation::UnicodeSegmentation;
-
 /// Extract words from text using fast whitespace splitting with punctuation trimming.
 /// For the vast majority of text, this produces identical results to unicode_words()
 /// but runs significantly faster on large inputs.
@@ -17,18 +15,6 @@ pub fn sentence_count(text: &str) -> usize {
         return 0;
     }
     let count = text.chars().filter(|&c| c == '.' || c == '!' || c == '?').count();
-    count.max(1)
-}
-
-/// Count sentences using Unicode sentence boundaries (used when precision matters).
-pub fn sentence_count_unicode(text: &str) -> usize {
-    if text.is_empty() {
-        return 0;
-    }
-    let count = text
-        .split_sentence_bounds()
-        .filter(|s| s.contains(|c: char| c.is_alphanumeric()))
-        .count();
     count.max(1)
 }
 

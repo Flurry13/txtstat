@@ -222,7 +222,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tiktoken-rs",
- "unicode-segmentation",
  "whatlang",
 ]
 

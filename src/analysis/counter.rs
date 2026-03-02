@@ -25,6 +25,8 @@ pub fn word_frequencies(text: &str) -> FxHashMap<String, usize> {
 }
 
 /// Count word frequencies from a pre-tokenized slice (avoids re-tokenization).
+/// Used by the library API (results.rs).
+#[allow(dead_code)]
 pub fn word_frequencies_from_slice(words: &[&str]) -> FxHashMap<String, usize> {
     let mut freqs = FxHashMap::default();
     for &word in words {
