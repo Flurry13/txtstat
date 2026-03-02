@@ -1,17 +1,26 @@
 use crate::analysis::tokenizer;
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 /// Threshold in bytes above which we use parallel processing.
+#[cfg(feature = "rayon")]
 const PARALLEL_THRESHOLD: usize = 64 * 1024;
 
 /// Count word frequencies from text. Case-sensitive.
 /// Uses parallel chunk processing for texts larger than 64KB.
 pub fn word_frequencies(text: &str) -> FxHashMap<String, usize> {
-    if text.len() < PARALLEL_THRESHOLD {
+    #[cfg(feature = "rayon")]
+    {
+        if text.len() < PARALLEL_THRESHOLD {
+            word_frequencies_sequential(text)
+        } else {
+            word_frequencies_parallel(text)
+        }
+    }
+    #[cfg(not(feature = "rayon"))]
+    {
         word_frequencies_sequential(text)
-    } else {
-        word_frequencies_parallel(text)
     }
 }
 
@@ -24,6 +33,7 @@ fn word_frequencies_sequential(text: &str) -> FxHashMap<String, usize> {
     freqs
 }
 
+#[cfg(feature = "rayon")]
 fn word_frequencies_parallel(text: &str) -> FxHashMap<String, usize> {
     let num_chunks = rayon::current_num_threads().max(2);
     let chunks = split_at_word_boundaries(text, num_chunks);
@@ -40,6 +50,7 @@ fn word_frequencies_parallel(text: &str) -> FxHashMap<String, usize> {
 }
 
 /// Split text into N chunks at word boundaries (UTF-8 safe).
+#[cfg(feature = "rayon")]
 fn split_at_word_boundaries(text: &str, n: usize) -> Vec<&str> {
     if n <= 1 || text.is_empty() {
         return vec![text];
@@ -118,6 +129,7 @@ pub fn type_token_ratio(freqs: &FxHashMap<String, usize>) -> f64 {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "rayon")]
     #[test]
     fn test_split_at_word_boundaries() {
         let text = "hello world foo bar baz qux";
@@ -128,6 +140,7 @@ mod tests {
         assert_eq!(rejoined.replace(' ', "").len() + rejoined.matches(' ').count(), text.len());
     }
 
+    #[cfg(feature = "rayon")]
     #[test]
     fn test_parallel_matches_sequential() {
         // Create text >64KB to exercise parallel path

@@ -1,5 +1,6 @@
 use crate::cli::OutputFormat;
 use anyhow::Result;
+#[cfg(feature = "comfy-table")]
 use comfy_table::{presets::UTF8_FULL_CONDENSED, Table, ContentArrangement, Cell, CellAlignment};
 use serde::Serialize;
 
@@ -26,12 +27,16 @@ impl ResultTable {
 
     pub fn render(&self, format: &OutputFormat) -> Result<String> {
         match format {
+            #[cfg(feature = "comfy-table")]
             OutputFormat::Table => Ok(self.render_table()),
+            #[cfg(not(feature = "comfy-table"))]
+            OutputFormat::Table => self.render_json(),
             OutputFormat::Json => self.render_json(),
             OutputFormat::Csv => self.render_csv(),
         }
     }
 
+    #[cfg(feature = "comfy-table")]
     fn render_table(&self) -> String {
         let mut table = Table::new();
         table

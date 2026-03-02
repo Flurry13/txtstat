@@ -11,14 +11,18 @@ clap_complete = "4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 csv = "1"
-comfy-table = "7"
+comfy-table = { version = "7", optional = true }
 unicode-segmentation = "1"
-memmap2 = "0"
+memmap2 = { version = "0", optional = true }
 rustc-hash = "2"
 anyhow = "1"
-rayon = "1"
+rayon = { version = "1", optional = true }
 whatlang = "0.16"
-tiktoken-rs = "0.6"
+tiktoken-rs = { version = "0.6", optional = true }
+
+[features]
+default = ["native"]
+native = ["memmap2", "rayon", "tiktoken-rs", "comfy-table"]
 
 [profile.release]
 opt-level = 3

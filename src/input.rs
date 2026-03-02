@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+#[cfg(feature = "memmap2")]
 use memmap2::Mmap;
 use std::fs::File;
 use std::io::{self, Read};
@@ -6,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 /// Resolved input text — either memory-mapped or owned
 pub enum InputText {
+    #[cfg(feature = "memmap2")]
     Mapped(Mmap),
     Owned(String),
 }
@@ -13,6 +15,7 @@ pub enum InputText {
 impl InputText {
     pub fn as_str(&self) -> Result<&str> {
         match self {
+            #[cfg(feature = "memmap2")]
             InputText::Mapped(mmap) => {
                 std::str::from_utf8(mmap).context("input is not valid UTF-8")
             }
@@ -29,9 +32,19 @@ pub fn read_file(path: &Path) -> Result<InputText> {
     if metadata.len() == 0 {
         return Ok(InputText::Owned(String::new()));
     }
-    let mmap = unsafe { Mmap::map(&file) }
-        .with_context(|| format!("could not mmap '{}'", path.display()))?;
-    Ok(InputText::Mapped(mmap))
+    #[cfg(feature = "memmap2")]
+    {
+        let mmap = unsafe { Mmap::map(&file) }
+            .with_context(|| format!("could not mmap '{}'", path.display()))?;
+        Ok(InputText::Mapped(mmap))
+    }
+    #[cfg(not(feature = "memmap2"))]
+    {
+        use std::io::Read as _;
+        let mut buf = String::new();
+        std::io::BufReader::new(file).read_to_string(&mut buf)?;
+        Ok(InputText::Owned(buf))
+    }
 }
 
 /// Read all of stdin into a string

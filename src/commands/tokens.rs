@@ -1,4 +1,6 @@
-use crate::analysis::{bpe, tokenizer};
+#[cfg(feature = "tiktoken-rs")]
+use crate::analysis::bpe;
+use crate::analysis::tokenizer;
 use crate::output::ResultTable;
 use crate::utils::format::format_num;
 use anyhow::Result;
@@ -15,6 +17,7 @@ pub fn run(text: &str, source_name: &str, model: Option<&str>) -> Result<ResultT
     table.add_row(vec!["Sentences".into(), format_num(sentences)]);
     table.add_row(vec!["Characters".into(), format_num(chars)]);
 
+    #[cfg(feature = "tiktoken-rs")]
     if let Some(model_str) = model {
         if model_str == "all" {
             let results = bpe::count_all_models(text)?;
@@ -29,6 +32,11 @@ pub fn run(text: &str, source_name: &str, model: Option<&str>) -> Result<ResultT
             let r = bpe::count_tokens(text, &m)?;
             table.add_row(vec![m.label().to_string(), format_num(r.token_count)]);
         }
+    }
+
+    #[cfg(not(feature = "tiktoken-rs"))]
+    if model.is_some() {
+        anyhow::bail!("BPE tokenization not available (built without tiktoken-rs feature)");
     }
 
     Ok(table)

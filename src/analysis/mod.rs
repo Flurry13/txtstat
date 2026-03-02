@@ -1,3 +1,4 @@
+#[cfg(feature = "tiktoken-rs")]
 pub mod bpe;
 pub mod counter;
 pub mod detect;
