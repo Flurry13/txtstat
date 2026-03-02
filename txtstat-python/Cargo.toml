@@ -9,5 +9,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
-txtstat = { path = ".." }
+txtstat-core = { path = "..", package = "txtstat" }
 serde_json = "1"
