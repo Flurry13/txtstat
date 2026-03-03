@@ -33,5 +33,5 @@ pub fn redundancy(rate: f64, vocab_size: usize) -> f64 {
     if max_entropy == 0.0 {
         return 0.0;
     }
-    1.0 - rate / max_entropy
+    (1.0 - rate / max_entropy).clamp(0.0, 1.0)
 }

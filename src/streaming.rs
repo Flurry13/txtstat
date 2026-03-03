@@ -123,6 +123,7 @@ pub fn stream_ngrams(
     n: usize,
     top: usize,
 ) -> Result<()> {
+    anyhow::ensure!(n >= 1, "n-gram size must be at least 1");
     let stdin = io::stdin();
     let reader = stdin.lock();
     let mut ngram_freqs: FxHashMap<String, usize> = FxHashMap::default();
@@ -259,7 +260,10 @@ pub fn stream_entropy(format: &OutputFormat, chunk_lines: usize) -> Result<()> {
     let stdin = io::stdin();
     let reader = stdin.lock();
     let mut word_freqs: FxHashMap<String, usize> = FxHashMap::default();
-    let mut all_words: Vec<String> = Vec::new();
+    let mut bigram_freqs: FxHashMap<String, usize> = FxHashMap::default();
+    let mut trigram_freqs: FxHashMap<String, usize> = FxHashMap::default();
+    let mut bigram_overlap: Vec<String> = Vec::new();
+    let mut trigram_overlap: Vec<String> = Vec::new();
     let mut chunk_count = 0usize;
     let mut line_buf = Vec::new();
     let mut first_csv = true;
@@ -268,17 +272,16 @@ pub fn stream_entropy(format: &OutputFormat, chunk_lines: usize) -> Result<()> {
         line_buf.push(line?);
         if line_buf.len() >= chunk_lines {
             let chunk = line_buf.join("\n");
-            let chunk_freqs = counter::word_frequencies(&chunk);
-            for (word, count) in &chunk_freqs {
-                *word_freqs.entry(word.clone()).or_insert(0) += count;
-            }
-            let words = tokenizer::words(&chunk);
-            all_words.extend(words.iter().map(|s| s.to_string()));
+            process_entropy_chunk(
+                &chunk,
+                &mut word_freqs,
+                &mut bigram_freqs,
+                &mut trigram_freqs,
+                &mut bigram_overlap,
+                &mut trigram_overlap,
+            );
             chunk_count += 1;
 
-            let word_refs: Vec<&str> = all_words.iter().map(|s| s.as_str()).collect();
-            let bigram_freqs = ngram::ngram_frequencies(&word_refs, 2);
-            let trigram_freqs = ngram::ngram_frequencies(&word_refs, 3);
             let h1 = entropy::shannon_entropy(&word_freqs);
             let h2 = entropy::shannon_entropy(&bigram_freqs);
             let h3 = entropy::shannon_entropy(&trigram_freqs);
@@ -294,27 +297,76 @@ pub fn stream_entropy(format: &OutputFormat, chunk_lines: usize) -> Result<()> {
     }
     if !line_buf.is_empty() {
         let chunk = line_buf.join("\n");
-        let chunk_freqs = counter::word_frequencies(&chunk);
-        for (word, count) in &chunk_freqs {
-            *word_freqs.entry(word.clone()).or_insert(0) += count;
-        }
-        let words = tokenizer::words(&chunk);
-        all_words.extend(words.iter().map(|s| s.to_string()));
+        process_entropy_chunk(
+            &chunk,
+            &mut word_freqs,
+            &mut bigram_freqs,
+            &mut trigram_freqs,
+            &mut bigram_overlap,
+            &mut trigram_overlap,
+        );
         chunk_count += 1;
-        let word_refs: Vec<&str> = all_words.iter().map(|s| s.as_str()).collect();
-        let bigram_freqs = ngram::ngram_frequencies(&word_refs, 2);
-        let trigram_freqs = ngram::ngram_frequencies(&word_refs, 3);
+
         let h1 = entropy::shannon_entropy(&word_freqs);
         let h2 = entropy::shannon_entropy(&bigram_freqs);
         let h3 = entropy::shannon_entropy(&trigram_freqs);
         let rate = entropy::entropy_rate(h2, h3);
         let vocab = word_freqs.len();
         let redund = entropy::redundancy(rate, vocab);
+
         emit_entropy(
             chunk_count, h1, h2, h3, rate, vocab, redund, format, &mut first_csv,
         )?;
     }
     Ok(())
+}
+
+fn process_entropy_chunk(
+    chunk: &str,
+    word_freqs: &mut FxHashMap<String, usize>,
+    bigram_freqs: &mut FxHashMap<String, usize>,
+    trigram_freqs: &mut FxHashMap<String, usize>,
+    bigram_overlap: &mut Vec<String>,
+    trigram_overlap: &mut Vec<String>,
+) {
+    let chunk_freqs = counter::word_frequencies(chunk);
+    for (word, count) in &chunk_freqs {
+        *word_freqs.entry(word.clone()).or_insert(0) += count;
+    }
+
+    let chunk_words = tokenizer::words(chunk);
+
+    // Update bigram frequencies with overlap for cross-chunk boundary
+    let mut bi_tokens: Vec<&str> = bigram_overlap.iter().map(|s| s.as_str()).collect();
+    bi_tokens.extend(chunk_words.iter());
+    let new_bigrams = ngram::ngram_frequencies(&bi_tokens, 2);
+    for (ng, count) in &new_bigrams {
+        *bigram_freqs.entry(ng.clone()).or_insert(0) += count;
+    }
+    *bigram_overlap = if chunk_words.len() >= 1 {
+        chunk_words[chunk_words.len() - 1..]
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
+    } else {
+        chunk_words.iter().map(|s| s.to_string()).collect()
+    };
+
+    // Update trigram frequencies with overlap for cross-chunk boundary
+    let mut tri_tokens: Vec<&str> = trigram_overlap.iter().map(|s| s.as_str()).collect();
+    tri_tokens.extend(chunk_words.iter());
+    let new_trigrams = ngram::ngram_frequencies(&tri_tokens, 3);
+    for (ng, count) in &new_trigrams {
+        *trigram_freqs.entry(ng.clone()).or_insert(0) += count;
+    }
+    *trigram_overlap = if chunk_words.len() >= 2 {
+        chunk_words[chunk_words.len() - 2..]
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
+    } else {
+        chunk_words.iter().map(|s| s.to_string()).collect()
+    };
 }
 
 fn emit_entropy(

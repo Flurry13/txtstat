@@ -17,12 +17,7 @@ fn test_stats_json() {
         .iter()
         .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Tokens (words)"))
         .expect("missing Tokens row");
-    let token_val: usize = tokens_row["value"]
-        .as_str()
-        .unwrap()
-        .replace(',', "")
-        .parse()
-        .unwrap();
+    let token_val = tokens_row["value"].as_u64().expect("token count should be a JSON number");
     assert!(token_val > 0);
 }
 
@@ -98,7 +93,7 @@ fn test_stats_single_word() {
     let tokens_row = records.iter().find(|r| {
         r.get("metric").and_then(|m| m.as_str()) == Some("Tokens (words)")
     }).unwrap();
-    assert_eq!(tokens_row["value"].as_str().unwrap(), "1");
+    assert_eq!(tokens_row["value"].as_u64().unwrap(), 1);
 }
 
 #[test]
@@ -204,12 +199,9 @@ fn test_stats_with_stopwords() {
         .iter()
         .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Stopwords Removed"));
     assert!(sw_row.is_some(), "should have Stopwords Removed row");
-    let removed: usize = sw_row.unwrap()["value"]
-        .as_str()
-        .unwrap()
-        .replace(',', "")
-        .parse()
-        .unwrap();
+    let removed = sw_row.unwrap()["value"]
+        .as_u64()
+        .expect("stopwords removed should be a JSON number");
     assert!(removed > 0, "should have removed some stopwords");
 }
 
@@ -252,11 +244,9 @@ fn test_perplexity_json() {
         .iter()
         .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Perplexity"))
         .expect("missing Perplexity row");
-    let pp_val: f64 = pp_row["value"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
+    let pp_val = pp_row["value"]
+        .as_f64()
+        .expect("perplexity should be a JSON number");
     assert!(pp_val.is_finite(), "perplexity should be finite");
     assert!(pp_val > 0.0, "perplexity should be positive");
 }
@@ -346,12 +336,9 @@ fn test_tokens_with_bpe() {
                 .unwrap_or(false)
         })
         .expect("missing BPE (GPT-4) row");
-    let count: usize = bpe_row["tokens"]
-        .as_str()
-        .unwrap()
-        .replace(',', "")
-        .parse()
-        .unwrap();
+    let count = bpe_row["tokens"]
+        .as_u64()
+        .expect("BPE token count should be a JSON number");
     assert!(count > 0, "BPE token count should be positive");
 }
 
@@ -374,6 +361,22 @@ fn test_tokens_backward_compatible() {
 }
 
 // --- v0.4.0 integration tests ---
+
+#[test]
+fn test_stats_json_numeric_values() {
+    let out = corpa(&["stats", "tests/fixtures/prose.txt", "--format", "json"]);
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    let records = parsed.as_array().unwrap();
+    let tokens_row = records
+        .iter()
+        .find(|r| r.get("metric").and_then(|m| m.as_str()) == Some("Tokens (words)"))
+        .unwrap();
+    assert!(
+        tokens_row["value"].is_number(),
+        "token count should be a JSON number, got: {}",
+        tokens_row["value"]
+    );
+}
 
 #[test]
 fn test_completions_bash() {

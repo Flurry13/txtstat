@@ -67,16 +67,30 @@ impl ResultTable {
             .map(|row| {
                 let mut map = serde_json::Map::new();
                 for (header, value) in self.headers.iter().zip(row.iter()) {
-                    map.insert(
-                        header.to_lowercase().replace(' ', "_"),
-                        serde_json::Value::String(value.clone()),
-                    );
+                    let key = header.to_lowercase().replace(' ', "_");
+                    let json_value = Self::parse_value(value);
+                    map.insert(key, json_value);
                 }
                 serde_json::Value::Object(map)
             })
             .collect();
 
         Ok(serde_json::to_string_pretty(&records)?)
+    }
+
+    /// Try to parse a display string as a JSON number, falling back to string.
+    /// Handles comma-formatted numbers ("1,234") and floats ("0.5429").
+    fn parse_value(s: &str) -> serde_json::Value {
+        let stripped = s.replace(',', "");
+        if let Ok(n) = stripped.parse::<u64>() {
+            return serde_json::Value::Number(n.into());
+        }
+        if let Ok(f) = stripped.parse::<f64>() {
+            if let Some(n) = serde_json::Number::from_f64(f) {
+                return serde_json::Value::Number(n);
+            }
+        }
+        serde_json::Value::String(s.to_string())
     }
 
     fn render_csv(&self) -> Result<String> {

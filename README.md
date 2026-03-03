@@ -16,7 +16,7 @@ A unified tool for corpus-level NLP statistics — n-gram frequencies, readabili
 
 - **High performance** — Parallel processing via `rayon`. Analyzes multi-GB corpora in seconds.
 - **Composable** — Unix-friendly design with structured output (JSON, CSV, table). Pipes seamlessly with `jq`, `awk`, and standard tooling.
-- **Comprehensive** — Nine analysis commands covering vocabulary statistics, n-gram frequencies, readability indices, Shannon entropy, Zipf's law, language model perplexity, language detection, and BPE tokenization.
+- **Comprehensive** — Eight analysis commands covering vocabulary statistics, n-gram frequencies, readability indices, Shannon entropy, Zipf's law, language model perplexity, language detection, and BPE tokenization.
 - **Multi-platform** — Available as a native CLI binary, a Python package via PyO3, and an npm/WASM module for browser and Node.js environments.
 - **Streaming** — Process unbounded stdin streams with incremental chunk-based output for `stats`, `ngrams`, and `entropy`.
 
@@ -220,11 +220,45 @@ Benchmarks on a 1GB English text corpus (Apple M2, 8 cores):
 
 ### Planned
 
-- Custom vocabulary and dictionary support
+#### v0.5.0 — Robustness & Output Quality
+
+- **Typed JSON output** — Emit numeric values as JSON numbers instead of comma-formatted strings for proper `jq` interoperability
+- **Improved sentence detection** — Collapse consecutive sentence-ending punctuation (e.g., `...` = 1, `?!` = 1) and handle common abbreviations (Mr., Dr., U.S.A.)
+- **Input validation hardening** — Guard against `n=0` panic in streaming n-gram path; clamp entropy redundancy to [0, 1]; validate parameters in public library API
+- **Unicode-aware syllable counting** — Recognize accented vowels (e, i, o, u) for correct readability scores on non-English Latin-script text
+- **Streaming entropy rewrite** — Replace O(n^2) accumulate-all-words approach with incremental entropy estimation that respects memory bounds
+
+#### v0.6.0 — Bindings Parity
+
+- **Python: expose missing parameters** — Stopword filtering, `min_freq`, `case_insensitive` for `ngrams`; stopwords for `stats`; BPE model selection for `tokens`
+- **Python: replace `.unwrap()` with proper error propagation** — Prevent potential interpreter crashes on serialization failures
+- **Python: add docstrings and `.pyi` type stubs** — Enable IDE autocompletion and `mypy`/`pyright` support
+- **WASM: fix `package.json`** — Correct entry point filenames, add missing `corpa_wasm_bg.js`, set `"type": "module"`, reconcile scoped package name
+- **WASM: expose filtering parameters** — Stopwords, `min_freq`, `case_insensitive` for `ngrams` and `stats`
+- **WASM: TypeScript type definitions** — Generate proper interfaces via `tsify` instead of returning `any`
+- **Version synchronization** — Align Python (0.4.1) and WASM (0.4.0) package versions with main crate
+
+#### v0.7.0 — Corpus Comparison & Search
+
 - Concordance / KWIC (keyword in context) search
-- Collocation analysis (PMI, chi-squared)
-- Sentiment lexicon scoring
-- Diff mode for comparing two corpora
+- Diff mode for comparing two corpora — side-by-side statistics, vocabulary overlap, divergence metrics
+- Collocation analysis (PMI, log-likelihood, chi-squared)
+- Custom vocabulary and dictionary support
+
+#### v0.8.0 — Advanced Analysis
+
+- Sentiment lexicon scoring (AFINN, VADER-style)
+- Topic segmentation and keyword extraction (TF-IDF)
+- Text complexity profiling — combined readability + entropy + vocabulary richness report
+- Configurable sentence tokenizer (regex-based or rule-based)
+
+#### Future
+
+- Language-specific stopword lists (bundled for top 10 languages)
+- Plugin system for custom analysis modules
+- Interactive TUI mode with live statistics
+- Parallel streaming for multi-file batch processing
+- Wasm streaming API for browser-based incremental analysis
 
 ---
 
@@ -251,7 +285,6 @@ This project is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-A
 - [rayon](https://github.com/rayon-rs/rayon) — Data parallelism
 - [clap](https://github.com/clap-rs/clap) — CLI argument parsing
 - [comfy-table](https://github.com/nuber-io/comfy-table) — Terminal table rendering
-- [unicode-segmentation](https://github.com/unicode-rs/unicode-segmentation) — Unicode text segmentation
 - [whatlang](https://github.com/grstreten/whatlang-rs) — Language detection
 - [tiktoken-rs](https://github.com/zurawiki/tiktoken-rs) — BPE tokenization for GPT models
 - [PyO3](https://github.com/PyO3/pyo3) — Rust bindings for Python

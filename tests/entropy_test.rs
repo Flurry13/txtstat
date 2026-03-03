@@ -56,3 +56,14 @@ fn test_redundancy() {
 fn test_redundancy_single_vocab() {
     assert_eq!(entropy::redundancy(1.0, 1), 0.0);
 }
+
+#[test]
+fn test_redundancy_clamped() {
+    // rate > max_entropy should clamp to 0.0, not go negative
+    let r = entropy::redundancy(10.0, 4); // max_entropy = log2(4) = 2.0
+    assert!(r >= 0.0 && r <= 1.0, "redundancy should be clamped to [0,1], got {}", r);
+
+    // negative rate should clamp to 1.0 at most
+    let r2 = entropy::redundancy(-1.0, 4);
+    assert!(r2 >= 0.0 && r2 <= 1.0, "redundancy should be clamped to [0,1], got {}", r2);
+}

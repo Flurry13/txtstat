@@ -36,3 +36,10 @@ fn test_ngram_frequencies() {
     assert_eq!(freqs.get("cat the"), Some(&2));
     assert_eq!(freqs.get("the dog"), Some(&1));
 }
+
+#[test]
+fn test_ngram_zero_returns_empty() {
+    let tokens: Vec<&str> = vec!["hello", "world"];
+    let result = ngram::ngram_frequencies(&tokens, 0);
+    assert!(result.is_empty());
+}

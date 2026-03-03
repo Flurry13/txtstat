@@ -10,7 +10,7 @@ pub fn ngrams<'a>(tokens: &'a [&str], n: usize) -> impl Iterator<Item = String> 
 /// Count n-gram frequencies from a token slice.
 /// Uses parallel processing for large inputs.
 pub fn ngram_frequencies(tokens: &[&str], n: usize) -> FxHashMap<String, usize> {
-    if tokens.len() < n {
+    if n == 0 || tokens.len() < n {
         return FxHashMap::default();
     }
     #[cfg(feature = "rayon")]

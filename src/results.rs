@@ -150,6 +150,9 @@ pub fn compute_ngrams(
     case_insensitive: bool,
     stopwords: Option<&FxHashSet<String>>,
 ) -> Vec<NgramEntry> {
+    if n == 0 {
+        return Vec::new();
+    }
     let words = tokenizer::words(text);
 
     // Apply stopword filtering before n-gram extraction
