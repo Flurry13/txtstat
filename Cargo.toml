@@ -1,5 +1,5 @@
 [workspace]
-members = ["."]
+members = [".", "corpa-python", "corpa-wasm"]
 
 [package]
 name = "corpa"
