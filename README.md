@@ -218,18 +218,9 @@ Benchmarks on a 1GB English text corpus (Apple M2, 8 cores):
 - **v0.3.0 — Language Models**: `perplexity` with Laplace/Stupid Backoff, `lang` detection, BPE token counting
 - **v0.4.0 — Ecosystem**: Python bindings (PyO3), WASM/npm package, streaming mode, shell completions
 - **v0.5.0 — Robustness & Output Quality**: Typed JSON output, improved sentence detection (abbreviations, ellipsis collapsing), input validation hardening, Unicode-aware syllable counting, streaming entropy rewrite
+- **v0.6.0 — Bindings Parity**: Python/WASM parameter parity (stopwords, min_freq, case_insensitive), proper error propagation, Python `.pyi` type stubs and docstrings, WASM TypeScript definitions, fixed `package.json`, version synchronization
 
 ### Planned
-
-#### v0.6.0 — Bindings Parity
-
-- **Python: expose missing parameters** — Stopword filtering, `min_freq`, `case_insensitive` for `ngrams`; stopwords for `stats`; BPE model selection for `tokens`
-- **Python: replace `.unwrap()` with proper error propagation** — Prevent potential interpreter crashes on serialization failures
-- **Python: add docstrings and `.pyi` type stubs** — Enable IDE autocompletion and `mypy`/`pyright` support
-- **WASM: fix `package.json`** — Correct entry point filenames, add missing `corpa_wasm_bg.js`, set `"type": "module"`, reconcile scoped package name
-- **WASM: expose filtering parameters** — Stopwords, `min_freq`, `case_insensitive` for `ngrams` and `stats`
-- **WASM: TypeScript type definitions** — Generate proper interfaces via `tsify` instead of returning `any`
-- **Version synchronization** — Align Python (0.4.1) and WASM (0.4.0) package versions with main crate
 
 #### v0.7.0 — Corpus Comparison & Search
 

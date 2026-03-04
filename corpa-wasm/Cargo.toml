@@ -1,6 +1,6 @@
 [package]
 name = "corpa-wasm"
-version = "0.4.0"
+version = "0.6.0"
 edition = "2021"
 publish = false
 
@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 corpa = { path = "..", default-features = false }
+rustc-hash = "2"
 wasm-bindgen = "0.2"
 serde-wasm-bindgen = "0.6"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"

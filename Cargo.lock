@@ -209,7 +209,7 @@ dependencies = [
 
 [[package]]
 name = "corpa"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -227,21 +227,23 @@ dependencies = [
 
 [[package]]
 name = "corpa-python"
-version = "0.4.1"
+version = "0.6.0"
 dependencies = [
  "corpa",
  "pyo3",
+ "rustc-hash 2.1.1",
+ "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "corpa-wasm"
-version = "0.4.0"
+version = "0.6.0"
 dependencies = [
  "corpa",
+ "rustc-hash 2.1.1",
  "serde",
  "serde-wasm-bindgen",
- "serde_json",
  "wasm-bindgen",
 ]
 

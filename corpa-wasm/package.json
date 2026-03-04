@@ -1,10 +1,18 @@
 {
   "name": "@flurry13/corpa",
-  "version": "0.4.0",
+  "version": "0.6.0",
+  "type": "module",
   "description": "Blazing-fast text analysis powered by Rust, compiled to WebAssembly.",
-  "main": "corpa.js",
-  "types": "corpa.d.ts",
-  "files": ["corpa_bg.wasm", "corpa.js", "corpa.d.ts"],
+  "main": "corpa_wasm.js",
+  "types": "index.d.ts",
+  "files": [
+    "corpa_wasm_bg.wasm",
+    "corpa_wasm.js",
+    "corpa_wasm_bg.js",
+    "corpa_wasm.d.ts",
+    "corpa_wasm_bg.wasm.d.ts",
+    "index.d.ts"
+  ],
   "keywords": ["nlp", "text-analysis", "wasm", "rust"],
-  "license": "MIT"
+  "license": "MIT OR Apache-2.0"
 }

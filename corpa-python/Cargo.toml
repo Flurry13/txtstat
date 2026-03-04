@@ -1,6 +1,6 @@
 [package]
 name = "corpa-python"
-version = "0.4.1"
+version = "0.6.0"
 edition = "2021"
 publish = false
 
@@ -11,4 +11,6 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
 corpa-core = { path = "..", package = "corpa" }
+rustc-hash = "2"
+serde = "1"
 serde_json = "1"
